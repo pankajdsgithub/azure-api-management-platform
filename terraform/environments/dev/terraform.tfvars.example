@@ -1,0 +1,24 @@
+# Example only. Replace placeholders after the design is approved.
+# Do not put credentials, access tokens, or secrets in this file.
+
+environment         = "dev"
+location            = "REPLACE_WITH_APPROVED_REGION"
+resource_group_name = "REPLACE_WITH_EXISTING_RESOURCE_GROUP"
+apim_name            = "REPLACE_WITH_UNIQUE_APIM_NAME"
+publisher_name       = "REPLACE_WITH_PUBLISHER_NAME"
+publisher_email      = "REPLACE_WITH_VALID_EMAIL"
+
+customer_backend_url = null
+orders_backend_url   = null
+
+log_analytics_workspace_id    = null
+diagnostic_log_categories     = []
+diagnostic_metric_categories  = []
+
+jwt_policy_enabled = false
+
+tags = {
+  environment = "dev"
+  managed_by  = "terraform"
+  project     = "azure-api-management-platform"
+}

@@ -1,0 +1,23 @@
+<policies>
+    <inbound>
+        <base />
+        <validate-azure-ad-token
+            tenant-id="REPLACE_WITH_TENANT_ID">
+            <audiences>
+                <audience>REPLACE_WITH_API_APPLICATION_ID_URI</audience>
+            </audiences>
+            <client-application-ids>
+                <application-id>REPLACE_WITH_ALLOWED_CLIENT_APPLICATION_ID</application-id>
+            </client-application-ids>
+        </validate-azure-ad-token>
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>
