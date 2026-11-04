@@ -31,3 +31,10 @@ spec:
                 name: kafka-sample
                 port:
                   number: 80
+          - path: /dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 80

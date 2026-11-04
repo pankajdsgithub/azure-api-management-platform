@@ -72,6 +72,10 @@ jobs:
         run: |
           az acr build --registry ${{ secrets.ACR_NAME }} --image kafka-sample:${{ github.sha }} ./backend/kafka-sample
 
+      - name: Build dashboard image
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image dashboard:${{ github.sha }} ./backend/dashboard
+
   deploy_dev:
     needs: build_images
     if: github.ref == 'refs/heads/main'
@@ -99,6 +103,7 @@ jobs:
           az containerapp update --name order-api --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/order-api:${{ github.sha }}
           az containerapp update --name notification-worker --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/notification-worker:${{ github.sha }}
           az containerapp update --name kafka-sample --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/kafka-sample:${{ github.sha }}
+          az containerapp update --name dashboard --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/dashboard:${{ github.sha }}
 
   deploy_prod:
     needs: deploy_dev

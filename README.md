@@ -37,12 +37,12 @@ flowchart LR
 - [docs/architecture/enterprise-platform-reference.md](docs/architecture/enterprise-platform-reference.md) — complete requirements matrix, service decisions, rationale, and diagrams
 - [docs/deployment/azure-cicd.md](docs/deployment/azure-cicd.md) — build, release, and deployment strategy
 - [docs/deployment/aks-deployment-plan.md](docs/deployment/aks-deployment-plan.md) — AKS rollout strategy and runtime topology
+- [docs/deployment/azure-eventhubs.md](docs/deployment/azure-eventhubs.md) — Azure Event Hubs production recommendation alongside the Kafka sample
 - [docs/runbooks/operations-runbook.md](docs/runbooks/operations-runbook.md) — operational model, alerts, and response playbook
 - [terraform/reference-platform](terraform/reference-platform) — full Azure reference infrastructure in Terraform
 - [kubernetes/aks](kubernetes/aks) — Kubernetes manifest templates for AKS deployment
 - [.github/workflows/azure-platform-cicd.yml](.github/workflows/azure-platform-cicd.yml) — application and infrastructure CI/CD workflow
-- [backend/customer-api](backend/customer-api) and [backend/order-api](backend/order-api) — FastAPI service implementations
-- [backend/notification-worker](backend/notification-worker) — asynchronous worker service for event-driven processing
+- [backend/customer-api](backend/customer-api), [backend/order-api](backend/order-api), [backend/notification-worker](backend/notification-worker), and [backend/dashboard](backend/dashboard) — FastAPI service implementations
 - [backend/kafka-sample](backend/kafka-sample) — Kafka producer sample service for event-driven workloads
 
 ## Security and safety
