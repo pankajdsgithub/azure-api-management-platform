@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-dev
+  labels:
+    app: azure-api-platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-prod
+  labels:
+    app: azure-api-platform

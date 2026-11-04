@@ -1,0 +1,21 @@
+<policies>
+  <inbound>
+    <base />
+    <validate-azure-ad-token tenant-id="${tenant_id}">
+      <audiences>
+        <audience>${api_audience}</audience>
+      </audiences>
+      <client-application-ids>
+${allowed_client_application_ids_xml}      </client-application-ids>
+    </validate-azure-ad-token>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

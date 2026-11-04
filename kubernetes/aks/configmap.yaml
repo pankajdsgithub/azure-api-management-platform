@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: platform-dev
+data:
+  APP_ENV: "dev"
+  KAFKA_BOOTSTRAP_SERVERS: "broker-1:9092,broker-2:9092"
+  KAFKA_TOPIC: "orders-events"
+  LOG_LEVEL: "INFO"

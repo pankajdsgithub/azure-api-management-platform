@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-sample
+  namespace: platform-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-sample
+  template:
+    metadata:
+      labels:
+        app: kafka-sample
+    spec:
+      containers:
+        - name: kafka-sample
+          image: mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "broker-1:9092,broker-2:9092"
+            - name: KAFKA_TOPIC
+              value: "orders-events"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-sample
+  namespace: platform-dev
+spec:
+  selector:
+    app: kafka-sample
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+  type: ClusterIP

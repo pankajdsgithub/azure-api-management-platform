@@ -8,13 +8,51 @@ locals {
   )
 }
 
+locals {
+  jwt_policy_content = templatefile(
+    "${path.root}/../../../policies/jwt-validation-policy.xml.tftpl",
+    {
+      tenant_id = coalesce(
+        var.entra_tenant_id,
+        "REPLACE_WITH_TENANT_ID"
+      )
+      api_audience = coalesce(
+        var.api_audience,
+        "REPLACE_WITH_API_APPLICATION_ID_URI"
+      )
+      allowed_client_application_ids_xml = join("", [
+        for id in sort(tolist(var.allowed_client_application_ids)) :
+        "               <application-id>${id}</application-id>\n"
+      ])
+    }
+  )
+}
+
 resource "terraform_data" "configuration_guard" {
   input = "dev-configuration-guard"
 
   lifecycle {
     precondition {
-      condition     = !local.configuration_is_placeholder
-      error_message = "Dev configuration contains REPLACE_ placeholder values. Supply approved values before planning or applying."
+      condition = (
+        !local.configuration_is_placeholder &&
+        (
+          !var.jwt_policy_enabled ||
+          (
+            can(regex(
+              "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              coalesce(var.entra_tenant_id, "")
+            )) &&
+            length(trimspace(coalesce(var.api_audience, ""))) > 0 &&
+            !startswith(trimspace(coalesce(var.api_audience, "")), "REPLACE_") &&
+            length(var.allowed_client_application_ids) > 0
+          )
+        ) &&
+        (
+          !(var.external_api_enabled || var.partner_api_enabled) ||
+          var.jwt_policy_enabled
+        )
+      )
+      error_message = "Invalid dev configuration: replace all REPLACE_ placeholders; when JWT validation is enabled, supply a valid Entra tenant UUID, a non-empty API audience, and at least one approved client application UUID. External and partner products require JWT validation."
     }
   }
 }
@@ -101,7 +139,7 @@ module "customer_jwt_policy" {
   resource_group_name = var.resource_group_name
   api_management_name = module.apim_service.name
   api_name            = module.customer_api.name
-  xml_content         = file("${path.root}/../../../policies/jwt-validation-policy.xml")
+  xml_content         = local.jwt_policy_content
 }
 
 module "orders_jwt_policy" {
@@ -112,7 +150,7 @@ module "orders_jwt_policy" {
   resource_group_name = var.resource_group_name
   api_management_name = module.apim_service.name
   api_name            = module.orders_api.name
-  xml_content         = file("${path.root}/../../../policies/jwt-validation-policy.xml")
+  xml_content         = local.jwt_policy_content
 }
 
 # Diagnostics are omitted until an existing workspace and at least
@@ -131,4 +169,10 @@ module "apim_diagnostics" {
   log_analytics_workspace_id = var.log_analytics_workspace_id
   log_categories             = var.diagnostic_log_categories
   metric_categories          = var.diagnostic_metric_categories
+}
+
+# Service-level policy: inherited by API policies through <base />.
+resource "azurerm_api_management_policy" "global" {
+  api_management_id = module.apim_service.id
+  xml_content       = file("${path.root}/../../../policies/global-policy.xml")
 }

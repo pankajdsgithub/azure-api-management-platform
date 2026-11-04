@@ -1,0 +1,119 @@
+name: Azure Platform CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest -q
+
+      - name: Terraform format check
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Validate Terraform configuration
+        run: |
+          cd terraform/reference-platform
+          terraform init -backend=false
+          terraform fmt -check -recursive
+          terraform validate
+
+  build_images:
+    needs: validate
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build customer API image
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image customer-api:${{ github.sha }} ./backend/customer-api
+
+      - name: Build order API image
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image order-api:${{ github.sha }} ./backend/order-api
+
+      - name: Build worker image
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image notification-worker:${{ github.sha }} ./backend/notification-worker
+
+      - name: Build Kafka sample image
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image kafka-sample:${{ github.sha }} ./backend/kafka-sample
+
+  deploy_dev:
+    needs: build_images
+    if: github.ref == 'refs/heads/main'
+    environment: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy infrastructure
+        run: |
+          cd terraform/reference-platform
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+      - name: Deploy app revisions
+        run: |
+          az containerapp update --name customer-api --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/customer-api:${{ github.sha }}
+          az containerapp update --name order-api --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/order-api:${{ github.sha }}
+          az containerapp update --name notification-worker --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/notification-worker:${{ github.sha }}
+          az containerapp update --name kafka-sample --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_LOGIN_SERVER }}/kafka-sample:${{ github.sha }}
+
+  deploy_prod:
+    needs: deploy_dev
+    if: github.ref == 'refs/heads/main'
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approval gate
+        run: echo "Production approval required before release."
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Production smoke test placeholder
+        run: |
+          echo "Run production smoke tests and availability checks here."

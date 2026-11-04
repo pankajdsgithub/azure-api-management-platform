@@ -87,3 +87,47 @@ variable "jwt_policy_enabled" {
   type        = bool
   default     = false
 }
+
+
+variable "external_api_enabled" {
+  description = "Opt in to publishing the approved APIs through a public-consumer APIM product. This does not configure network isolation."
+  type        = bool
+  default     = false
+}
+
+variable "partner_api_enabled" {
+  description = "Opt in to publishing the approved APIs through a partner APIM product. This does not configure network isolation."
+  type        = bool
+  default     = false
+}
+
+variable "entra_tenant_id" {
+  description = "Microsoft Entra tenant UUID used by the JWT validation policy."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "api_audience" {
+  description = "Expected access-token audience for the APIs."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "allowed_client_application_ids" {
+  description = "Approved Entra client application UUIDs allowed by the API JWT policy."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for id in var.allowed_client_application_ids :
+      can(regex(
+        "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+        id
+      ))
+    ])
+    error_message = "Every allowed client application ID must be a UUID."
+  }
+}
